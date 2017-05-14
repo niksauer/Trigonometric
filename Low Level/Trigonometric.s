@@ -7,11 +7,11 @@
 #
 
 .data
-    pi:                     .double     3.141592653589793238462643383279502884197169399375105820974
-    pi_half:                .double     1.570796326794896619231321691639751442098584699687552910487
+    PI:                     .double     3.141592653589793238462643383279502884197169399375105820974
+    halfPI:                   .double     1.570796326794896619231321691639751442098584699687552910487
     approximations:         .word       6
 
-    welcomeMessage:         .asciiz     "Tabulates trigonometric function results for n equidistant values in user specified interval [x(min), x(max)].\n"
+    welcomeMessage:         .asciiz     "Tabulates trigonometric function results for n equidistant values in specified interval [x(min), x(max)].\n"
     partitionsQuestion:     .asciiz     "Please input the desired number (n) of equidistant values: "
     xMinQuestion:           .asciiz     "Please specify the interval start [x(min)]: "
     xMaxQuestion:           .asciiz     "Please specify the interval end [x(max)]: "
@@ -51,7 +51,7 @@
 
         # Validate Intervall
         c.lt.d $f20, $f22		# x min < x max
-        bc1f intervall_error    # otherwise, error and ask again
+        bc1f intervalError    # otherwise, error and ask again
 
         # Get Number of steps = n
         la $a0, partitionsQuestion        # Ask for n
@@ -76,7 +76,7 @@
 
         li.d $f28, 0.0          # Initialize counter for loop
 
-    calc_loop:
+    tableCalcLoop:
         # Calculation loop:
         # n -> f24
         # counter -> f28
@@ -92,7 +92,7 @@
         mov.d $f12, $f20		# Load x as argument
         li $v0, 3               # Define double output
         syscall                 # Print
-        jal print_pipe          # Seperate columns
+        jal printColumnSeperator          # Seperate columns
 
         # Get sin(x)
         jal sin                 # Execute sin(x) (x is still in f12)
@@ -102,22 +102,22 @@
         mov.d $f12, $f0         # Load output as argument
         li $v0, 3               # Define double output
         syscall                 # Print
-        jal print_pipe          # Seperate columns
+        jal printColumnSeperator          # Seperate columns
 
         # Get cos(x)
         mov.d $f12, $f20		# Load x as argument
-        jal cos                 # Execute cos(x)
+        jal cosine                 # Execute cos(x)
 
         # Print cos(x)
         mov.d $f12, $f0         # Load output as arument
         li $v0, 3               # Define double output
         syscall                 # Print
-        jal print_pipe          # Seperate columns
+        jal printColumnSeperator          # Seperate columns
 
         # Get tan(x)
         mov.d $f12, $f30        # Load sin(x) as argument
         mov.d $f14, $f0         # Load cos(x) as argument
-        jal tan                 # Execute tan(x)
+        jal tangent                 # Execute tan(x)
 
         # Print tan(x)
         # Preparation for print happens in tan
@@ -138,7 +138,7 @@
         li.d $f4, 1.0           # Load 1
         add.d $f28, $f28, $f4	# Increment counter by 1
 
-        j calc_loop             # Next iteration
+        j tableCalcLoop             # Next iteration
 
     sin:
         # Calculate sin(x)
@@ -155,17 +155,17 @@
         # Map negative values of x into positive
         li.d $f4, 0.0           # Load 0 for comparison
         c.lt.d $f12, $f4        # If x is negative
-        bc1t invert             # Make it poitive!
+        bc1t mapToPositive             # Make it poitive!
 
-        # Cntinue with mapping
-        jal mapLoop
+        # Cntinue with mapPIng
+        jal mapToDefinedIntervalLoop
 
         # Restore return adress
         lw $ra, 0($sp)			# Load return adress
         addi $sp, $sp, 4		# Free space
         jr $ra                  # Go back
 
-    invert:
+    mapToPositive:
         # Map a negative value x1 to a positive one x2
         # where sin(x1) = flag * sin(x2)
 
@@ -174,34 +174,34 @@
         mul.d $f12, $f12, $f4   # Multiply x with -1
 
         # Adjust position
-        ldc1 $f4, pi			# load pi in f4
-        add.d $f12, $f12, $f4   # Add Pi
+        ldc1 $f4, PI			# load PI in f4
+        add.d $f12, $f12, $f4   # Add PI
 
         # Flag adjustment
         li $a0, 1               # Set flag for loop
 
-        # Mapping algorithm
-        j mapLoop
+        # MapPIng algorithm
+        j mapToDefinedIntervalLoop
 
-    mapLoop:
-        # Map everything to the [-pi/2, pi/2] intervall
-        # By substracting pi
+    mapToDefinedIntervalLoop:
+        # Map everything to the [-PI/2, PI/2] intervall
+        # By substracting PI
 
         # Check if we are done
-        ldc1 $f4, pi_half       # load pi/2 in f4
+        ldc1 $f4, halfPI       # load PI/2 in f4
         c.le.d $f12, $f4        # If x is in bounds
-        bc1t sin0               # Jump out of loop if true
+        bc1t sine0               # Jump out of loop if true
 
-        # Else: Mapping loop
-        ldc1 $f4, pi            # Load pi
-        sub.d $f12, $f12, $f4   # Subtract: x = x - pi
+        # Else: MapPIng loop
+        ldc1 $f4, PI            # Load PI
+        sub.d $f12, $f12, $f4   # Subtract: x = x - PI
         li, $t0, -1             # Load -1
         mul $a0, $a0, $t0       # Invert flag
 
-        j mapLoop               # Loop
+        j mapToDefinedIntervalLoop               # Loop
 
-    sin0:
-        # After mapping, calculate sin0(x)
+    sine0:
+        # After mapPIng, calculate sin0(x)
         # x: f12
         # flag: a0, ->s2
         # result: f24
@@ -236,14 +236,14 @@
         jal power               # calculate power
         mov.d $f26, $f0         # save result of power operation
 
-    sin0Loop:
+    sine0CalcLoop:
         # Loop for sin() calculation
         # term: f20
         # term2: f22
         # counter: s0
 
         # Exit condition for loop
-        bge $s0, $s1, sin0_end	# If counter is larger than desired iterations, youre done
+        bge $s0, $s1, sine0End	# If counter is larger than desired iterations, youre done
 
         mtc1.d $s0, $f28		# Synchronize counter with counter in cop. 1
         cvt.d.w $f28, $f28		# Convert counter to double
@@ -271,9 +271,9 @@
         mul.d $f0, $f0, $f20	# result is in f0, term2 in f20
         add.d $f24, $f24, $f0	# save to overall result
         addi $s0, $s0, 1		# increment counter
-        j sin0Loop              # Loop
+        j sine0CalcLoop              # Loop
 
-    sin0_end:
+    sine0End:
         # Almost finished, restore registers and take flag into account
 
         # Store result
@@ -307,7 +307,7 @@
         # Exit condition: if y is 0, exit
         li.d $f16, 0.0			# Load 0
         c.eq.d $f14, $f16		# Check if y is 0
-        bc1t power_end			# Then exit
+        bc1t powerBreakCondition			# Then exit
 
         # Subtract y by 1 and do recursive call
         li.d $f16, 1.0			# Load 1 for subtraction
@@ -320,7 +320,7 @@
         addi $sp, $sp, 4		# Free space
         jr $ra                  # Go back
 
-    power_end:
+    powerBreakCondition:
         # Return 1 on recursion end
 
         li.d $f0, 1.0			# Load return value
@@ -330,7 +330,7 @@
         addi $sp, $sp, 4		# Free space
         jr $ra                  # Go back
 
-    cos:
+    cosine:
         # Calculate cos(x)
 
         # Store return adress
@@ -338,7 +338,7 @@
         sw $ra, 0($sp)			# Save return adress
 
         # Convert cos to sin
-        ldc1 $f4, pi_half       # Load pi/2
+        ldc1 $f4, halfPI       # Load PI/2
         sub.d $f12, $f4, $f12	# Convert cos to sin
 
         # Calculate sin
@@ -351,7 +351,7 @@
         # Go back
         jr $ra
 
-    tan:
+    tangent:
         # Calculate tan(x)
         # Takes sin(x) (f12) and cos(x) (f14)
 
@@ -359,14 +359,14 @@
         # only, if cos(x) is not 0!
         li.d $f4, 0.0           # Load 0
         c.eq.d $f14, $f4        # Compare cos(x) to 0
-        bc1t tan_nan            # If cos(x) is 0, throw error
+        bc1t undefinedTangent            # If cos(x) is 0, throw error
 
         # Otherwise calculate tan(x) = sin/cos
         div.d $f12, $f12, $f14  # Calculate
         li $v0, 3               # Prepare output
         jr $ra                  # Jump back to print output
 
-    tan_nan:
+    undefinedTangent:
         # Tan(x) can not be calculated
         # Print error
         la $a0, NaNErrorMessage       # Load error message
@@ -374,14 +374,14 @@
         jr $ra                  # Jump back to print
 
 
-    print_pipe:
-        # Print Pipe ( as column seperator )
+    printColumnSeperator:
+        # Print PIpe ( as column seperator )
         la $a0, columnSeperator
         li $v0, 4
         syscall
         jr $ra
 
-    intervall_error:
+    intervalError:
         # User has entered a faulty intervall, give error and go back to main
         la $a0, intervalErrorMessage
         li $v0, 4

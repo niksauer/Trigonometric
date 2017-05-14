@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		243486A81EC86D1300654E09 /* Trigonometric.s in Sources */ = {isa = PBXBuildFile; fileRef = 243486A71EC86D1300654E09 /* Trigonometric.s */; };
 		24CA9BCA1EADE6A9008CD4E5 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 24CA9BC91EADE6A9008CD4E5 /* main.c */; };
 /* End PBXBuildFile section */
 
@@ -24,7 +23,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		243486A71EC86D1300654E09 /* Trigonometric.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = Trigonometric.s; path = "../Low Level/Trigonometric.s"; sourceTree = "<group>"; };
 		24CA9BC61EADE6A9008CD4E5 /* Trigonometric */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Trigonometric; sourceTree = BUILT_PRODUCTS_DIR; };
 		24CA9BC91EADE6A9008CD4E5 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -43,7 +41,6 @@
 		24CA9BBD1EADE6A9008CD4E5 = {
 			isa = PBXGroup;
 			children = (
-				243486A71EC86D1300654E09 /* Trigonometric.s */,
 				24CA9BC81EADE6A9008CD4E5 /* Trigonometric */,
 				24CA9BC71EADE6A9008CD4E5 /* Products */,
 			);
@@ -122,7 +119,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				243486A81EC86D1300654E09 /* Trigonometric.s in Sources */,
 				24CA9BCA1EADE6A9008CD4E5 /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
