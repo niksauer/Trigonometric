@@ -15,7 +15,7 @@
 #define PI_2 1.57079632679
 
 // function prototypes
-void unitTest();
+void sinusUnitTest();
 void userInput();
 
 int factorial(int x);
@@ -32,14 +32,14 @@ double tangens(double x);
 
 
 int main(int argc, const char * argv[]) {
-    unitTest();
-//    userInput();
+//    sinusUnitTest();
+    userInput();
     return 0;
 }
 
-void unitTest() {
-    int xMin = -12;
-    int xMax = 23;
+void sinusUnitTest() {
+    int xMin = -5.4287;
+    int xMax = 23.1381;
     double partition = (xMax - xMin) / 20;
     
     for (int i= 0; i < 20; i++) {
@@ -47,17 +47,10 @@ void unitTest() {
         double custom = sinus(xValue);
         double real = sin(xValue);
         double diff = fabs(real-custom);
-        printf("custom sin: % 02.8lf \t real: % 02.8lf \t diff: % 02.8lf \n", custom, real, diff);
+        char * acceptable = (diff < MAX_DIFF) ? "yes" : "no";
+        
+        printf("custom sin: % 02.8lf \t accept: %s, with diff: % 02.8lf \n", custom, acceptable, diff);
     }
-    
-//    double customResult = tangens(7.9565);
-//    double result = tan(7.9565);
-//    double diff = fabs(customResult-result);
-//    char * acceptable = (diff < MAX_DIFF) ? "yes" : "no";
-//    
-//    printf("custom(x): %f\n", customResult);
-//    printf("proper(x): %f\n", result);
-//    printf("error acceptable: %s with difference: %f\n", acceptable, diff);
 }
 
 void userInput() {
@@ -82,7 +75,7 @@ void userInput() {
         double cosResult = cosinus(xValue);
         double tanResult = tangens(xValue);
         
-        printf("x%d = % 02.8lf -> \t sin: % 02.8lf (diff: % 02.8lf) \t cos: % 02.8lf (diff: % 02.8lf) \t tan: % 02.8lf (diff: % 02.8lf) \n", i, xValue, sinResult, fabs(sinResult-sin(xValue)), cosResult, fabs(cosResult-cos(xValue)), tanResult, fabs(tanResult-tan(xValue)));
+        printf("x%d = % 8.8lf -> \t sin: % 02.8lf (diff: % 02.8lf) \t cos: % 02.8lf (diff: % 02.8lf) \t tan: % 02.8lf (diff: % 02.8lf) \n", i, xValue, sinResult, fabs(sinResult-sin(xValue)), cosResult, fabs(cosResult-cos(xValue)), tanResult, fabs(tanResult-tan(xValue)));
     }
 }
 
@@ -164,21 +157,34 @@ double sinus(double x) {
     if (x >= -M_PI_2 && x <= M_PI_2) {
         return sinus0(x);
     } else {
-        int periodOffset;
-        
-        if (x < -M_PI_2) {
-            periodOffset = (int) ((x - M_PI_2) / M_PI);
-        } else {
-            periodOffset = (int) ((x + M_PI_2) / M_PI);
+        if (x < 0) {
+            x = -x + M_PI;
         }
         
-        int isOdd = modulo(periodOffset, 2);
+        int prefix = 1;
         
-        if (isOdd) {
-            return sinus0(periodOffset * M_PI - x);
-        } else {
-            return sinus0(x - periodOffset * M_PI);
+        while (x > M_PI_2) {
+            x = x - M_PI;
+            prefix = -prefix;
         }
+        
+        return (sinus(x) * prefix);
+        
+//        int periodOffset;
+//        
+//        if (x < -M_PI_2) {
+//            periodOffset = (int) ((x - M_PI_2) / M_PI);
+//        } else {
+//            periodOffset = (int) ((x + M_PI_2) / M_PI);
+//        }
+//        
+//        int isOdd = modulo(periodOffset, 2);
+//        
+//        if (isOdd) {
+//            return sinus0(periodOffset * M_PI - x);
+//        } else {
+//            return sinus0(x - periodOffset * M_PI);
+//        }
     }
 }
 
