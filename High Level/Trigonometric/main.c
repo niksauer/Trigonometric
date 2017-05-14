@@ -15,7 +15,7 @@
 #define PI_2 1.57079632679
 
 // function prototypes
-void sinusUnitTest();
+void sineUnitTest();
 void userInput();
 
 int factorial(int x);
@@ -25,26 +25,26 @@ int modulo(int x, int y);
 double taylorSeries(double x, int approximations);
 double optimizedTaylorSeries(double x, int approximations);
 
-double sinus0(double x);
-double sinus(double x);
-double cosinus(double x);
-double tangens(double x);
+double sine0(double x);
+double sine(double x);
+double cosine(double x);
+double tangent(double x);
 
 
 int main(int argc, const char * argv[]) {
-//    sinusUnitTest();
+//    sineUnitTest();
     userInput();
     return 0;
 }
 
-void sinusUnitTest() {
+void sineUnitTest() {
     int xMin = -5.4287;
     int xMax = 23.1381;
     double partition = (xMax - xMin) / 20;
     
     for (int i= 0; i < 20; i++) {
         double xValue = xMin + i*partition;
-        double custom = sinus(xValue);
+        double custom = sine(xValue);
         double real = sin(xValue);
         double diff = fabs(real-custom);
         char * acceptable = (diff < MAX_DIFF) ? "yes" : "no";
@@ -71,9 +71,9 @@ void userInput() {
     
     for (int i = 0; i < numberOfValuesInInterval; i++) {
         double xValue = xMin + i*partition;
-        double sinResult = sinus(xValue);
-        double cosResult = cosinus(xValue);
-        double tanResult = tangens(xValue);
+        double sinResult = sine(xValue);
+        double cosResult = cosine(xValue);
+        double tanResult = tangent(xValue);
         
         printf("x%d = % 08.8lf -> \t sin: % 02.8lf (diff: % 02.8lf) \t cos: % 02.8lf (diff: % 02.8lf) \t tan: % 02.8lf (diff: % 02.8lf) \n", i, xValue, sinResult, fabs(sinResult-sin(xValue)), cosResult, fabs(cosResult-cos(xValue)), tanResult, fabs(tanResult-tan(xValue)));
     }
@@ -147,28 +147,28 @@ double optimizedTaylorSeries(double x, int approximations) {
 
 
 
-double sinus0(double x) {
+double sine0(double x) {
     int approximations = 6;
     
     return optimizedTaylorSeries(x, approximations);
 }
 
-double sinus(double x) {
+double sine(double x) {
     if (x >= -M_PI_2 && x <= M_PI_2) {
-        return sinus0(x);
+        return sine0(x);
     } else {
         if (x < 0) {
             x = -x + M_PI;
         }
         
-        int prefix = 1;
+        int sign = 1;
         
         while (x > M_PI_2) {
             x = x - M_PI;
-            prefix = -prefix;
+            sign = -sign;
         }
         
-        return (sinus(x) * prefix);
+        return (sine(x) * sign);
         
 //        int periodOffset;
 //        
@@ -181,24 +181,24 @@ double sinus(double x) {
 //        int isOdd = modulo(periodOffset, 2);
 //        
 //        if (isOdd) {
-//            return sinus0(periodOffset * M_PI - x);
+//            return sine0(periodOffset * M_PI - x);
 //        } else {
-//            return sinus0(x - periodOffset * M_PI);
+//            return sine0(x - periodOffset * M_PI);
 //        }
     }
 }
 
-double cosinus(double x) {
-    return sinus(M_PI_2 - x);
+double cosine(double x) {
+    return sine(M_PI_2 - x);
 }
 
-double tangens(double x) {
-    return sinus(x) / cosinus(x);
+double tangent(double x) {
+    return sine(x) / cosine(x);
 //    int undefined = (modulo(x-M_PI_2, M_PI) == 0);
 //    
 //    if (undefined) {
 //        return 99;
 //    } else {
-//        return sinus(x) / cosinus(x);
+//        return sine(x) / cosine(x);
 //    }
 }

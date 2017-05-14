@@ -8,7 +8,7 @@
 
 .data
     PI:                     .double     3.141592653589793238462643383279502884197169399375105820974
-    halfPI:                   .double     1.570796326794896619231321691639751442098584699687552910487
+    halfPI:                 .double     1.570796326794896619231321691639751442098584699687552910487
     approximations:         .word       6
 
     welcomeMessage:         .asciiz     "Tabulates trigonometric function results for n equidistant values in specified interval [x(min), x(max)].\n"
@@ -95,7 +95,7 @@
         jal printColumnSeperator          # Seperate columns
 
         # Get sin(x)
-        jal sin                 # Execute sin(x) (x is still in f12)
+        jal sine                 # Execute sin(x) (x is still in f12)
         mov.d $f30, $f0			# Store output in f30 for tan later
 
         # Print sin(x)
@@ -140,30 +140,23 @@
 
         j tableCalcLoop             # Next iteration
 
-    sin:
-        # Calculate sin(x)
+    # Calculate sin(x)
+    sine:
+        addi $sp, $sp, -4		# Reserve space
+        sw $ra, 0($sp)			# Store return address
 
-        # Store return adress
-        addi $sp, $sp, -4		# Make space
-        sw $ra, 0($sp)			# Store return adress
+        li $a0, 1               # Set sign
 
-        ### Algorithm, see c program
-
-        # Prepare Flag
-        li $a0, 1
-
-        # Map negative values of x into positive
         li.d $f4, 0.0           # Load 0 for comparison
-        c.lt.d $f12, $f4        # If x is negative
-        bc1t mapToPositive             # Make it poitive!
+        c.lt.d $f12, $f4        # Check if x is negative
 
-        # Cntinue with mapPIng
-        jal mapToDefinedIntervalLoop
+        bc1t mapToPositive      # If true, map x into positive number space
 
-        # Restore return adress
-        lw $ra, 0($sp)			# Load return adress
-        addi $sp, $sp, 4		# Free space
-        jr $ra                  # Go back
+        jal mapToDefinedIntervalLoop # Map x into defined interval (-halfPI, halfPI)
+
+        lw $ra, 0($sp)          # Load return adress
+        addi $sp, $sp, 4        # Free space
+        jr $ra                  # Return
 
     mapToPositive:
         # Map a negative value x1 to a positive one x2
@@ -342,7 +335,7 @@
         sub.d $f12, $f4, $f12	# Convert cos to sin
 
         # Calculate sin
-        jal sin                 # Calculate sin
+        jal sine                 # Calculate sin
 
         # Restore return adress
         lw $ra, 0($sp)			# Load return adress
