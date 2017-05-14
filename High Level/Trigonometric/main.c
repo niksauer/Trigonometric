@@ -193,11 +193,12 @@ double cosinus(double x) {
 }
 
 double tangens(double x) {
-    int undefined = (modulo(x-M_PI_2, M_PI) == 0);
-    
-    if (undefined) {
-        return 99;
-    } else {
-        return sinus(x) / cosinus(x);
-    }
+    return sinus(x) / cosinus(x);
+//    int undefined = (modulo(x-M_PI_2, M_PI) == 0);
+//    
+//    if (undefined) {
+//        return 99;
+//    } else {
+//        return sinus(x) / cosinus(x);
+//    }
 }
