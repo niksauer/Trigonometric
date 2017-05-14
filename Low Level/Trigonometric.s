@@ -194,15 +194,13 @@
         j mapToDefinedIntervalLoop               # Loop
 
     sine0:
-        # After mapPIng, calculate sin0(x)
-        # x: f12
-        # flag: a0, ->s2
-        # result: f24
-        # term: f20
-        # term2: f22
-        # counter: s0
+        # x:        f12
+        # sign:     a0, ->s2
+        # result:   f24
+        # term:     f20
+        # term2:    f22
+        # counter:  s0
 
-        # Save return adress
         addi $sp, $sp, -48		# Make space
         sw $ra, 0($sp)			# Store return adress
 
@@ -212,7 +210,6 @@
         sw $s2, 12($sp)         # to save result from last method (flag)
         sdc1 $f20, 16($sp)      # to save term
 
-        #not needed?: sdc1 $f22, 24($sp)      # to save term2
         sdc1 $f24, 24($sp)      # to save overall result
         sdc1 $f26, 32($sp)      # to save power result
         sdc1 $f28, 40($sp)      # to store counter (as double)
@@ -230,13 +227,11 @@
         mov.d $f26, $f0         # save result of power operation
 
     sine0CalcLoop:
-        # Loop for sin() calculation
         # term: f20
         # term2: f22
         # counter: s0
 
-        # Exit condition for loop
-        bge $s0, $s1, sine0End	# If counter is larger than desired iterations, youre done
+        bge $s0, $s1, sine0End	# Exit if number of approximation terms has been reached
 
         mtc1.d $s0, $f28		# Synchronize counter with counter in cop. 1
         cvt.d.w $f28, $f28		# Convert counter to double
