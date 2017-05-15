@@ -9,10 +9,10 @@
 #include <stdio.h>
 #include <math.h>
 
-// global definition
-#define MAX_DIFF 0.00001
-#define PI 3.1415926535897932384626433832795028841971693993751058209749445923078164
-#define PI_2 1.57079632679
+// global definitions
+#define MAX_DIFF    0.00001
+#define PI          3.141592653589793238462643383279502884197169399375105820974
+#define PI_2        1.570796326794896619231321691639751442098584699687552910487
 
 // function prototypes
 void sineUnitTest();
@@ -30,12 +30,13 @@ double sine(double x);
 double cosine(double x);
 double tangent(double x);
 
-
+// function implementations
 int main(int argc, const char * argv[]) {
 //    sineUnitTest();
     userInput();
     return 0;
 }
+
 
 void sineUnitTest() {
     int xMin = -5.4287;
@@ -80,7 +81,6 @@ void userInput() {
 }
 
 
-
 int factorial(int x) {
     if (x <= 1) {
         return 1;
@@ -106,7 +106,6 @@ int modulo(int x, int y) {
     
     return result;
 }
-
 
 
 double taylorSeries(double x, int approximations) {
@@ -146,7 +145,6 @@ double optimizedTaylorSeries(double x, int approximations) {
 }
 
 
-
 double sine0(double x) {
     int approximations = 6;
     
@@ -169,22 +167,6 @@ double sine(double x) {
         }
         
         return (sine0(x) * sign);
-        
-//        int periodOffset;
-//        
-//        if (x < -M_PI_2) {
-//            periodOffset = (int) ((x - M_PI_2) / M_PI);
-//        } else {
-//            periodOffset = (int) ((x + M_PI_2) / M_PI);
-//        }
-//        
-//        int isOdd = modulo(periodOffset, 2);
-//        
-//        if (isOdd) {
-//            return sine0(periodOffset * M_PI - x);
-//        } else {
-//            return sine0(x - periodOffset * M_PI);
-//        }
     }
 }
 
@@ -193,12 +175,11 @@ double cosine(double x) {
 }
 
 double tangent(double x) {
-    return sine(x) / cosine(x);
-//    int undefined = (modulo(x-M_PI_2, M_PI) == 0);
-//    
-//    if (undefined) {
-//        return 99;
-//    } else {
-//        return sine(x) / cosine(x);
-//    }
+    double cosResult = cosine(x);
+    
+    if (cosResult == 0) {
+        return NAN;
+    } else {
+        return sine(x) / cosResult;
+    }
 }

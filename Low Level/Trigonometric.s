@@ -12,14 +12,14 @@
     approximations:         .word       6
 
     welcomeMessage:         .asciiz     "Tabulates trigonometric function results for n equidistant values in specified interval [x(min), x(max)].\n"
-    partitionsQuestion:     .asciiz     "Please input the desired number (n) of equidistant values: "
-    xMinQuestion:           .asciiz     "Please specify the interval start [x(min)]: "
-    xMaxQuestion:           .asciiz     "Please specify the interval end [x(max)]: "
+    partitionsQuestion:     .asciiz     "\nPlease input the desired number (n) of equidistant values: "
+    xMinQuestion:           .asciiz     "\nPlease specify the interval start [x(min)]: "
+    xMaxQuestion:           .asciiz     "\nPlease specify the interval end [x(max)]: "
 
     NaNErrorMessage:        .asciiz     "ERROR - Undefined result (NaN)."
     intervalErrorMessage:   .asciiz     "ERROR - Interval end [x(max)] must be larger than interval start [x(min)].\n"
 
-    tableHeader:            .asciiz     " x\t| sin(x)\t\t\t| cos(x)\t\t\t| tan(x)\n"
+    tableHeader:            .asciiz     "\nx\t| sin(x)\t\t\t| cos(x)\t\t\t| tan(x)\n"
     columnSeperator:        .asciiz     "\t|"
     rowSeperator:           .asciiz     "-----------------------------------------------------------------------------------------------\n"
     lineBreak:              .asciiz     "\n"
