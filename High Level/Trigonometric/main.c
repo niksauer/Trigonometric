@@ -168,7 +168,7 @@ double sine(double x) {
             sign = -sign;
         }
         
-        return (sine(x) * sign);
+        return (sine0(x) * sign);
         
 //        int periodOffset;
 //        

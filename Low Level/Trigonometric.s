@@ -2,7 +2,7 @@
 #   Trigonometric.s
 #   Trigonometric
 #
-#   Created by Niklas Sauer on 14.05.17.
+#   Created by Niklas Sauer, Malcolm Malam on 02.05.17.
 #   Copyright © 2017 DHBW Stuttgart. All rights reserved.
 #
 
@@ -28,355 +28,408 @@
 .text
 .globl main
     main:
-        # Display greeting
-        la $a0, welcomeMessage        # Load string
-        li $v0, 4               # Define output
-        syscall                 # .
+        # print progam purpose
+        la $a0, welcomeMessage  # load welcome message
+        li $v0, 4               # load print_string system call upcode
+        syscall                 # execute system call
 
-        # Get Interval min
-        la $a0, xMinQuestion     # Ask for x min
-        li $v0, 4               # Define output
-        syscall                 # .
-        li $v0, 7               # Define input
-        syscall                 # Get x min
-        mov.d $f20, $f0			# store in f20
+        # ask user for interval start
+        la $a0, xMinQuestion
+        li $v0, 4
+        syscall
 
-        # Get x max
-        la $a0, xMaxQuestion     # Ask for x max
-        li $v0, 4               # Define output
-        syscall                 # .
-        li $v0, 7               # Define input
-        syscall					# Get x max
-        mov.d $f22, $f0			# store in f20
+        # set $f20 = user specified interval start x(min)
+        li $v0, 7               # load read_double system call upcode
+        syscall
+        mov.d $f20, $f0         # move syscall result to $f20
 
-        # Validate Intervall
-        c.lt.d $f20, $f22		# x min < x max
-        bc1f intervalError    # otherwise, error and ask again
+        # ask user for interval end
+        la $a0, xMaxQuestion
+        li $v0, 4
+        syscall
 
-        # Get Number of steps = n
-        la $a0, partitionsQuestion        # Ask for n
-        li $v0, 4               # Define output
-        syscall                 # .
-        li $v0, 7               # Define input
-        syscall                 # Get n
-        mov.d $f24, $f0			# Store n in f24
+        # set $f22 = user specified interval end x(max)
+        li $v0, 7
+        syscall
+        mov.d $f22, $f0
 
-        # User input done, calculate the steps between x min and max
-        sub.d $f22, $f22, $f20	# Calculate difference and store in f22
-        div.d $f26, $f22, $f24	# Divide difference by n = stepsize, store in f26
+        # CURRENT STATE
+        # xMin:     $f20
+        # xMax:     $f22
 
-        # Stepsize calculated, in f26
+        # check if xMin < xMax, if true: print error and restart
+        c.lt.d $f20, $f22
+        bc1f intervalBreakCondition
 
-        # Print legend for Table output
-        la $a0, tableHeader            # Load asciiz
-        li $v0, 4               # Define output
-        syscall                 # Print
-        la $a0, rowSeperator          # Load seperator asciiz
-        syscall                 # Print
+        # ask user for number of equidistant values (n)
+        la $a0, partitionsQuestion
+        li $v0, 4
+        syscall
 
-        li.d $f28, 0.0          # Initialize counter for loop
+        # set $f24 = user specified number of equidistant values (n) -> rows
+        li $v0, 7
+        syscall
+        mov.d $f24, $f0
+
+        # CURRENT STATE
+        # xMin:     $f20
+        # xMax:     $f22
+        # n:        $f24
+
+        # set $f26 = partition size
+        sub.d $f22, $f22, $f20	# calculate intervalLength = xMax - xMin
+        div.d $f26, $f22, $f24	# calculate partition size = intervalLength / n
+
+        # CURRENT STATE
+        # xMin:             $f20
+        # xMax:             $f22
+        # n:                $f24
+        # partitionSize:    $f26
+
+        # print table header
+        la $a0, tableHeader
+        li $v0, 4
+        syscall
+        la $a0, rowSeperator
+        syscall
+
+        # set $28 = current partition counter (= 0) -> currentRow
+        li.d $f28, 0.0
 
     tableCalcLoop:
-        # Calculation loop:
-        # n -> f24
-        # counter -> f28
-        # Print next set of x, sin(x), cos(x) and tan(x) in table
+        # ENTER STATE
+        # xValue:           $f20
+        # rows:             $f24
+        # partitionSize:    $f26
+        # currentRow:       $f28
 
-        # Exit Condition: If n is <= counter, exit
-        c.le.d $f24, $f28       # n <= counter?
-        bc1t end                # Then, program has finished
+        # exit program, if rows <= currentRow
+        c.le.d $f24, $f28
+        bc1t exit
 
-        # Otherwise, print next row
+        # set $f12 = xValue, print
+        mov.d $f12, $f20            # sine awaits value in $f12
+        li $v0, 3                   # load print_double system call upcode
+        syscall
 
-        # Print x
-        mov.d $f12, $f20		# Load x as argument
-        li $v0, 3               # Define double output
-        syscall                 # Print
-        jal printColumnSeperator          # Seperate columns
+        jal printColumnSeperator
 
-        # Get sin(x)
-        jal sine                 # Execute sin(x) (x is still in f12)
-        mov.d $f30, $f0			# Store output in f30 for tan later
+        # set $f30 = sine(xValue)
+        jal sine
+        mov.d $f30, $f0             # store result for later tangent calculation
 
-        # Print sin(x)
-        mov.d $f12, $f0         # Load output as argument
-        li $v0, 3               # Define double output
-        syscall                 # Print
-        jal printColumnSeperator          # Seperate columns
+        # print sine(xValue) result
+        mov.d $f12, $f0             # print_double awaits value in $f12
+        li $v0, 3
+        syscall
 
-        # Get cos(x)
-        mov.d $f12, $f20		# Load x as argument
-        jal cosine                 # Execute cos(x)
+        jal printColumnSeperator
 
-        # Print cos(x)
-        mov.d $f12, $f0         # Load output as arument
-        li $v0, 3               # Define double output
-        syscall                 # Print
-        jal printColumnSeperator          # Seperate columns
+        # calculate cosine(xValue)
+        mov.d $f12, $f20            # cosine awaits value in $f12
+        jal cosine
 
-        # Get tan(x)
-        mov.d $f12, $f30        # Load sin(x) as argument
-        mov.d $f14, $f0         # Load cos(x) as argument
-        jal tangent                 # Execute tan(x)
+        # print cosine(xValue) result
+        mov.d $f12, $f0
+        li $v0, 3
+        syscall
 
-        # Print tan(x)
-        # Preparation for print happens in tan
-        syscall                 # Print
+        jal printColumnSeperator
 
-        # Done with row, print a new line & seperator
-        la $a0, lineBreak         # Load \n
-        li $v0, 4               # Define output
-        syscall                 # Print
-        la $a0, rowSeperator          # Load seperator
-        li $v0, 4               # Define output
-        syscall                 # Print
+        # calculate tangent(xValue)
+        mov.d $f12, $f30            # tangent awaits sine(xValue) in $f12
+        mov.d $f14, $f0             # tangent awaits cosine(xValue) in $f14
+        jal tangent
 
-        # Move on with intervall
-        add.d $f20, $f20, $f26	# new x is x min + stepsize
+        # print tangent(x)
+        mov.d $f12, $f0
+        li $v0, 3
+        syscall
 
-        # Increment counter
-        li.d $f4, 1.0           # Load 1
-        add.d $f28, $f28, $f4	# Increment counter by 1
+        # print line break
+        la $a0, lineBreak
+        li $v0, 4
+        syscall
 
-        j tableCalcLoop             # Next iteration
+        # print row seperator
+        la $a0, rowSeperator
+        li $v0, 4
+        syscall
 
-    # Calculate sin(x)
+        # set xValue = xValue + partitionSize
+        add.d $f20, $f20, $f26
+
+        # set currentRow = currentRow + 1
+        li.d $f4, 1.0
+        add.d $f28, $f28, $f4
+
+        # jump to loop head to execute next recursion step
+        j tableCalcLoop
+
     sine:
-        addi $sp, $sp, -4		# Reserve space
-        sw $ra, 0($sp)			# Store return address
+        # ENTER STATE
+        # x:        $f12
+        # sign:     $a0
 
-        li $a0, 1               # Set sign
+        # branch setup
+        addi $sp, $sp, -4		# make space
+        sw $ra, 0($sp)			# store return address
 
-        li.d $f4, 0.0           # Load 0 for comparison
-        c.lt.d $f12, $f4        # Check if x is negative
+        # set $a0 to initial result sign (= 1)
+        li $a0, 1
 
-        bc1t mapToPositive      # If true, map x into positive number space
+        # check if x is negative, if true: map into positive number space
+        li.d $f4, 0.0
+        c.lt.d $f12, $f4
+        bc1t mapToPositive
 
-        jal mapToDefinedIntervalLoop # Map x into defined interval (-halfPI, halfPI)
+        # map x irrespective of position into defined interval (-halfPI, halfPI)
+        jal mapToDefinedIntervalLoop
 
-        lw $ra, 0($sp)          # Load return adress
-        addi $sp, $sp, 4        # Free space
-        jr $ra                  # Return
+        # restore saved registers
+        lw $ra, 0($sp)
+
+        # free stack
+        addi $sp, $sp, 4
+
+        # exit sine function, jump to calling register
+        jr $ra
 
     mapToPositive:
-        # Map a negative value x1 to a positive one x2
-        # where sin(x1) = flag * sin(x2)
+        # ENTER STATE
+        # x:        $f12
 
-        # Invert
-        li.d $f4, -1.0          # Load -1
-        mul.d $f12, $f12, $f4   # Multiply x with -1
+        # set x = -x + PI
+        li.d $f4, -1.0
+        mul.d $f12, $f12, $f4   # multiply negative x with (-1)
+        ldc1 $f4, PI
+        add.d $f12, $f12, $f4
 
-        # Adjust position
-        ldc1 $f4, PI			# load PI in f4
-        add.d $f12, $f12, $f4   # Add PI
-
-        # Flag adjustment
-        li $a0, 1               # Set flag for loop
-
-        # MapPIng algorithm
+        # map x irrespective of position into defined interval (-halfPI, halfPI)
         j mapToDefinedIntervalLoop
 
     mapToDefinedIntervalLoop:
-        # Map everything to the [-PI/2, PI/2] intervall
-        # By substracting PI
+        # ENTER STATE
+        # x:        $f12
 
-        # Check if we are done
-        ldc1 $f4, halfPI       # load PI/2 in f4
-        c.le.d $f12, $f4        # If x is in bounds
-        bc1t sine0               # Jump out of loop if true
+        # check if x =< PI/2, if true: break and calculate sine of x
+        ldc1 $f4, halfPI
+        c.le.d $f12, $f4
+        bc1t sine0
 
-        # Else: MapPIng loop
-        ldc1 $f4, PI            # Load PI
-        sub.d $f12, $f12, $f4   # Subtract: x = x - PI
-        li, $t0, -1             # Load -1
-        mul $a0, $a0, $t0       # Invert flag
+        # if false: set x = x - PI, set sign = -sign
+        ldc1 $f4, PI
+        sub.d $f12, $f12, $f4
+        li, $t0, -1
+        mul $a0, $a0, $t0
 
-        j mapToDefinedIntervalLoop               # Loop
+        # jump to loop head to execute next recursion step
+        j mapToDefinedIntervalLoop
 
     sine0:
-        # x:        f12
-        # sign:     a0, ->s2
-        # result:   f24
-        # term:     f20
-        # term2:    f22
-        # counter:  s0
+        # ENTER STATE
+        # x:        $f12
+        # sign:     $a0
 
-        addi $sp, $sp, -48		# Make space
-        sw $ra, 0($sp)			# Store return adress
+        # branch setup
+        addi $sp, $sp, -48		# make space
+        sw $ra, 0($sp)			# store return adress
 
-        # save registers to be used
-        sw $s0, 4($sp)			# to save counter variable
-        sw $s1, 8($sp)          # to save iteration count
-        sw $s2, 12($sp)         # to save result from last method (flag)
-        sdc1 $f20, 16($sp)      # to save term
+        # function setup
+        #
+        # set $s0 = current approximation term count (= 1)
+        sw $s0, 4($sp)
+        li $s0, 1
 
-        sdc1 $f24, 24($sp)      # to save overall result
-        sdc1 $f26, 32($sp)      # to save power result
-        sdc1 $f28, 40($sp)      # to store counter (as double)
+        # set $s1 = desired number of approximations (= 6)
+        sw $s1, 8($sp)
+        lw $s1, approximations
 
-        move $s2, $a0           # capture the flag!
-        li $s0, 1               # set s0 to 1 for the counter variable
-        lw $s1, approximations      # set s1 to the iteration count
+        # set $s2 = calculated sign from mapping to defined interval
+        sw $s2, 12($sp)
+        move $s2, $a0
 
-        mov.d $f20, $f12        # set term (f20) to x
-        mov.d $f24, $f12        # set result (f24) to x
+        # set $f20 (lastTerm) = mapped x
+        sdc1 $f20, 16($sp)
+        mov.d $f20, $f12
 
-        # Prepare for loop, calculate constants
-        li.d $f14, 2.0          # set 2nd arg
-        jal power               # calculate power
-        mov.d $f26, $f0         # save result of power operation
+        # set $f24 (result) = mapped x
+        sdc1 $f24, 24($sp)
+        mov.d $f24, $f12
+
+        # store current approximation term count as double
+        sdc1 $f28, 40($sp)
+
+        # set constant exponent/factor for future calculations
+        li.d $f14, 2.0
+
+        # set $26 to constant x^2 to calculate numerator of next taylor term  by multiplication
+        sdc1 $f26, 32($sp)
+        jal power
+        mov.d $f26, $f0
 
     sine0CalcLoop:
-        # term: f20
-        # term2: f22
-        # counter: s0
+        # ENTER STATE
+        # approximations:   $s1
+        # counter:          $s0
+        # lastTerm:         $f20
+        # result:           $f24
 
-        bge $s0, $s1, sine0End	# Exit if number of approximation terms has been reached
+        # exit, if total desired number of approximation terms has been reached
+        bge $s0, $s1, sine0BreakCondition
 
-        mtc1.d $s0, $f28		# Synchronize counter with counter in cop. 1
-        cvt.d.w $f28, $f28		# Convert counter to double
+        # copy current approximation term count as double to coprocessor 1
+        mtc1.d $s0, $f28
+        cvt.d.w $f28, $f28
 
-        li.d $f4, 2.0			# Load 2 in temp. reg. for term 2*i
-        mul.d $f16, $f28, $f4	# 2*i is now in f16
+        # calculate denominator of next taylor term
+        li.d $f4, 2.0
+        mul.d $f16, $f28, $f4	# $f16  = (2*i)
+        li.d $f6, 1.0
+        add.d $f18, $f16, $f6	# $f18  = (2*i+1)
+        mul.d $f4, $f16, $f18	# $f04  = (2*i+1) * (2*i)
 
-        li.d $f6, 1.0			# Load 1 in temp. reg. for term 2*i+1
-        add.d $f18, $f16, $f6	# 2*i+1 is now in f18
+        # set $f20 (nextTerm)
+        div.d $f16, $f26, $f4	# calculate difference factor (x^2 / (2*i+1) * (2*i))
+        mul.d $f20, $f20, $f16	# multiply difference factor with last taylor term
 
-        mul.d $f4, $f16, $f18	# (2*i+1)*2*i is now in f4
+        # set appropriate sign (= pow(-1, counter) * nextTerm) of next taylor term
+        li.d $f12, -1.0
+        mov.d $f14, $f28
+        jal power
+        mul.d $f0, $f0, $f20
 
-        # Divide pow(x,2) by f4
-        div.d $f16, $f26, $f4	# pow(x,2) is in f26, divide by f4 and store in f16
+        # add next taylor term to intermediate result
+        add.d $f24, $f24, $f0
 
-        # Complete term2
-        mul.d $f20, $f20, $f16	# multiply term (which is in f20) with (x^2)/(4i^2 + 2i) which is in f16
+        # increment current approximation term count
+        addi $s0, $s0, 1
 
-        # Calculate pow(-1, counter)
-        li.d $f12, -1.0			# Prepare 1st arg for power
-        mov.d $f14, $f28		# Prepare 2nd arg for power, the counter
-        jal power				# Calculate power
+        # jump to loop head to execute next recursion step
+        j sine0CalcLoop
 
-        # Multiply the result with the term2
-        mul.d $f0, $f0, $f20	# result is in f0, term2 in f20
-        add.d $f24, $f24, $f0	# save to overall result
-        addi $s0, $s0, 1		# increment counter
-        j sine0CalcLoop              # Loop
+    sine0BreakCondition:
+        # ENTER STATE
+        # sign:   $s2
+        # result: $f24
 
-    sine0End:
-        # Almost finished, restore registers and take flag into account
+        # store final result
+        mov.d $f0, $f24
 
-        # Store result
-        mov.d $f0, $f24			# put result in register
+        # multiply final result with sign calculated from mapping into defined interval
+        mtc1.d $s2, $f16
+        cvt.d.w $f16, $f16
+        mul.d $f0, $f0, $f16
 
-        # Invert result, if flag is set
-        mtc1.d $s2, $f16		# Move flag to cop. 1
-        cvt.d.w $f16, $f16		# Convert flag to double
-        mul.d $f0, $f0, $f16    # Multiply
-
-        # Restore everything else
-        lw $ra, 0($sp)			# Return addr
-        lw $s0, 4($sp)			# Used Registers
+        # restore saved registers
+        lw $ra, 0($sp)
+        lw $s0, 4($sp)
         lw $s1, 8($sp)
         lw $s2, 12($sp)
         ldc1 $f20, 16($sp)
         ldc1 $f24, 24($sp)
         ldc1 $f26, 32($sp)
         ldc1 $f28, 40($sp)
+
+        # free stack
         addi $sp, $sp, 48
 
-        jr $ra                  # Return
-
-    power:
-        # Calculate the power x^y or f12^f14
-
-        # Store return adress
-        addi $sp, $sp, -4		# Make space
-        sw $ra, 0($sp)			# Store return adress
-
-        # Exit condition: if y is 0, exit
-        li.d $f16, 0.0			# Load 0
-        c.eq.d $f14, $f16		# Check if y is 0
-        bc1t powerBreakCondition			# Then exit
-
-        # Subtract y by 1 and do recursive call
-        li.d $f16, 1.0			# Load 1 for subtraction
-        sub.d $f14, $f14, $f16	# y = y-1
-        jal power			    # Recursion
-        mul.d $f0, $f12, $f0	# Return value
-
-        # Restore return adress
-        lw $ra, 0($sp)			# Load return adress
-        addi $sp, $sp, 4		# Free space
-        jr $ra                  # Go back
-
-    powerBreakCondition:
-        # Return 1 on recursion end
-
-        li.d $f0, 1.0			# Load return value
-
-        # Restore return adress
-        lw $ra, 0($sp)			# Load return adress
-        addi $sp, $sp, 4		# Free space
-        jr $ra                  # Go back
-
-    cosine:
-        # Calculate cos(x)
-
-        # Store return adress
-        addi $sp, $sp, -4		# Make space
-        sw $ra, 0($sp)			# Save return adress
-
-        # Convert cos to sin
-        ldc1 $f4, halfPI       # Load PI/2
-        sub.d $f12, $f4, $f12	# Convert cos to sin
-
-        # Calculate sin
-        jal sine                 # Calculate sin
-
-        # Restore return adress
-        lw $ra, 0($sp)			# Load return adress
-        addi $sp, $sp, 4		# Free the space
-
-        # Go back
+        # exit sine0 function, jump to calling register
         jr $ra
 
+    power:
+        # ENTER STATE
+        # x:    $f12
+        # e:    $f14
+
+        # branch setup
+        addi $sp, $sp, -4		# make space
+        sw $ra, 0($sp)			# store return adress
+
+        # exit, if exponent e = 0 -> result = 1
+        li.d $f16, 0.0
+        c.eq.d $f14, $f16
+        bc1t powerBreakCondition
+
+        # jump to loop head to execute next recursion step with decremented exponent e = e - 1
+        li.d $f16, 1.0
+        sub.d $f14, $f14, $f16
+        jal power
+
+        # set result
+        mul.d $f0, $f12, $f0
+
+        # prepare for exit
+        lw $ra, 0($sp)      # restore saved registers
+        addi $sp, $sp, 4    # free stack
+        jr $ra              # exit power function, jump to calling register
+
+    powerBreakCondition:
+        # load return value result = 1
+        li.d $f0, 1.0
+
+        # prepare for exit
+        lw $ra, 0($sp)      # restore saved registers
+        addi $sp, $sp, 4    # free stack
+        jr $ra              # exit power break condition, jump to calling register
+
+    cosine:
+        # ENTER STATE
+        # x:    $f12
+
+        # branch setup
+        addi $sp, $sp, -4		# make space
+        sw $ra, 0($sp)			# save return adress
+
+        # set x = PI/2 - x
+        ldc1 $f4, halfPI
+        sub.d $f12, $f4, $f12
+
+        # calculate sine(x)
+        jal sine
+
+        # prepare for exit
+        lw $ra, 0($sp)      # restore saved registers
+        addi $sp, $sp, 4		# free stack
+        jr $ra              # exit cosine function, jump to calling register
+
     tangent:
-        # Calculate tan(x)
-        # Takes sin(x) (f12) and cos(x) (f14)
+        # ENTER STATE
+        # sine(x):      $f12
+        # cosine(x):    $f14
 
-        # Check if tan(x) can be calculated
-        # only, if cos(x) is not 0!
-        li.d $f4, 0.0           # Load 0
-        c.eq.d $f14, $f4        # Compare cos(x) to 0
-        bc1t undefinedTangent            # If cos(x) is 0, throw error
+        # exit, if cosine(x) = 0 as division by zero is undefined
+        li.d $f4, 0.0
+        c.eq.d $f14, $f4
+        bc1t tangentBreakCondition
 
-        # Otherwise calculate tan(x) = sin/cos
-        div.d $f12, $f12, $f14  # Calculate
-        li $v0, 3               # Prepare output
-        jr $ra                  # Jump back to print output
+        # calculate tangent(x) = sine(x)/cosine(x)
+        div.d $f12, $f12, $f14
 
-    undefinedTangent:
-        # Tan(x) can not be calculated
-        # Print error
-        la $a0, NaNErrorMessage       # Load error message
-        li $v0, 4               # Prepare output
-        jr $ra                  # Jump back to print
+        # store final result
+        mov.d $f0, $f12
 
+        # exit tangent function, jump to calling register
+        jr $ra
+
+    tangentBreakCondition:
+        la $a0, NaNErrorMessage         # load string literal
+        li $v0, 4                       # load print_string system call upcode
+        syscall                         # execute system call
+        jr $ra                          # exit tangent function, jump to calling register
 
     printColumnSeperator:
-        # Print PIpe ( as column seperator )
         la $a0, columnSeperator
         li $v0, 4
         syscall
         jr $ra
 
-    intervalError:
-        # User has entered a faulty intervall, give error and go back to main
+    intervalBreakCondition:
         la $a0, intervalErrorMessage
         li $v0, 4
         syscall
         j main
 
-    end:
-        # Bye bye
-        li $v0, 10
-        syscall
+    exit:
+        li $v0, 10                      # load exit system call upcode
+        syscall                         # execute system call
